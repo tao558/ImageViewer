@@ -40,6 +40,7 @@ set( QtImageViewer_SRCS
   QtImageViewer.cxx
   RulerWidget.cxx
   BoxWidget.cxx
+  TextBoxWidget.cxx
   )
 
 set( QtImageViewer_GUI_SRCS
@@ -51,6 +52,7 @@ set( QtImageViewer_MOC_SRCS
   QtImageViewer.h
   RulerWidget.h
   BoxWidget.h
+  TextBoxWidget.h
   )
 
 add_library( QtImageViewer STATIC ${QtImageViewer_SRCS}

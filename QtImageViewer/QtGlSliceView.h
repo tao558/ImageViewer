@@ -38,6 +38,7 @@ limitations under the License.
 #include "QtImageViewer_Export.h"
 #include "RulerWidget.h"
 #include "BoxWidget.h"
+#include "TextBoxWidget.h"
 
 #include <memory>
 #include <unordered_map>
@@ -48,6 +49,8 @@ class ONSDMetaDataGenerator;
 class RainbowMetaDataGenerator;
 class RulerToolMetaDataFactory;
 class BoxToolMetaDataFactory;
+class TextBoxTool;
+class TextBoxToolMetaDataFactory;
 struct RulerToolMetaData;
 
 using namespace itk;
@@ -118,7 +121,7 @@ struct ClickPoint
   //double operator[](int index){return }
   };
 
-typedef enum {PAINT3D_STEP, PAINT2D_STEP, RULER_STEP, BOX_STEP} StepType;
+typedef enum {PAINT3D_STEP, PAINT2D_STEP, RULER_STEP, BOX_STEP, TEXT_BOX_STEP} StepType;
 
 /*! Parent struct defining a Step (with a type)
 * The type is a ClickModeType.
@@ -167,6 +170,16 @@ struct RulerStep : Step
 {
   RulerStep() : Step(RULER_STEP) {}
   std::shared_ptr<RulerToolMetaDataFactory> factory;
+};
+
+/*! Text box step.
+*/
+
+struct TextBoxStep : Step
+{
+  TextBoxStep() : Step(TEXT_BOX_STEP) {}
+  std::string defaultText;
+  std::shared_ptr<TextBoxToolMetaDataFactory> factory;
 };
 
 /**
@@ -589,6 +602,48 @@ public slots:
   */
   void setIsONSDRuler(bool flag);
 
+  /**
+  * Adds a box.
+  * \param name name of the box
+  * \param axis placed axis
+  * \param slice the slice number
+  * \param point1 top left of box
+  * \param point2 bottom right of box
+  */
+  void addBox(std::string name, int axis, int slice, double point1[], double point2[]);
+
+  /**
+  * Adds a text box.
+  * \param axis placed axis
+  * \param slice the slice number
+  */
+  void addTextBox(int axis, int slice);
+
+  /**
+  * Adds a text box to the current axis and slice.
+  */
+  void addTextBox();
+
+  /**
+  * removes a text box at the specified axis and slice.
+  * \param axis placed axis
+  * \param slice the slice number
+  * \return true if text box was removed successfully, false otherwise
+  */
+  bool removeTextBox(int axis, int slice);
+
+  /**
+  * Removes the text box at the current axis and slice.
+  * \return true if text box was removed successfully, false otherwise
+  */
+  bool removeTextBox();
+
+  /**
+   * Sets the currently displayed text box (if there is one) to invisible
+   * Operates on the text box in the current axis and slice.
+  */
+  void hideActiveTextBox();
+
 
 signals:
 
@@ -676,6 +731,9 @@ protected:
   BoxToolCollection* getBoxToolCollection();
   BoxToolCollection* getBoxToolCollection(int axis, int sliceNum);
 
+  TextBoxTool* getTextBox();
+  TextBoxTool* getTextBox(int axis, int sliceNum);
+
   double cIWMin;
   double cIWMax;
   IWModeType cIWModeMin;
@@ -754,8 +812,10 @@ protected:
   std::shared_ptr< RulerToolMetaDataFactory > cRainbowMetaFactory;
   std::shared_ptr< RulerToolMetaDataFactory > cCurrentRulerMetaFactory;
   std::shared_ptr< BoxToolMetaDataFactory > cCurrentBoxMetaFactory;
+  std::shared_ptr< TextBoxToolMetaDataFactory > cTextBoxMetaFactory;
   std::map< std::pair<int, int>, std::unique_ptr< RulerToolCollection > > cRulerCollections;
   std::map< std::pair<int, int>, std::unique_ptr< BoxToolCollection > > cBoxCollections;
+  std::map< std::pair<int, int>, std::unique_ptr< TextBoxTool > > cTextBoxes;
 };
   
 #endif

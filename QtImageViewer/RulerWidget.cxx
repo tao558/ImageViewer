@@ -117,7 +117,6 @@ double RulerTool::length() {
 }
 
 void RulerTool::paint() { 
-
     QPainter painter(this->parent);
     QPen pen;
 

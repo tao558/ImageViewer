@@ -549,9 +549,20 @@ int parseAndExecImageViewer(int argc, char* argv[])
         step->factory = factory;
 
         steps.push_back(std::move(step));
+      }else if (type == "t" || type == "T")
+      {
+        auto defaultText = workflow[i++];
+        auto generator = std::unique_ptr<TextBoxMetaDataGenerator>(new TextBoxMetaDataGenerator(defaultText));
+
+        std::shared_ptr<TextBoxToolMetaDataFactory> factory(new TextBoxToolMetaDataFactory(std::move(generator)));
+
+        std::unique_ptr<TextBoxStep> step(new TextBoxStep());
+        step->factory = factory;
+
+        steps.push_back(std::move(step));
       }else
       {
-        throw std::runtime_error("Use p, P, b, B, r, R for this switch");
+        throw std::runtime_error("Use p, P, b, B, r, R, t, T for this switch");
       }
     }
 

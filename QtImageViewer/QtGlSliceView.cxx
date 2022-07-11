@@ -198,6 +198,7 @@ QtGlSliceView::QtGlSliceView( QWidget* widgetParent )
 
   cCurrentBoxMetaFactory = std::shared_ptr< BoxToolMetaDataFactory >(new BoxToolMetaDataFactory(std::unique_ptr< ConstantBoxMetaDataGenerator >(new ConstantBoxMetaDataGenerator())));
 
+  cTextBoxMetaFactory = std::shared_ptr< TextBoxToolMetaDataFactory >(new TextBoxToolMetaDataFactory(std::unique_ptr< TextBoxMetaDataGenerator >(new TextBoxMetaDataGenerator())));
   update();
 }
 
@@ -1407,6 +1408,9 @@ void QtGlSliceView::switchWorkflowStep( int index )
     auto rulerStep = static_cast<RulerStep *>(step.get());
     auto collection = getRulerToolCollection();
     collection->setMetaDataFactory(rulerStep->factory);
+  } else if (step->type == TEXT_BOX_STEP) {
+    auto textBoxStep = static_cast<TextBoxStep *>(step.get());
+    this->cTextBoxMetaFactory = textBoxStep->factory;
   }
 }
 
@@ -1629,22 +1633,26 @@ void QtGlSliceView::keyPressEvent(QKeyEvent* keyEvent)
   switch (keyEvent->key())
     {
     case Qt::Key_0:
+      this->hideActiveTextBox();
       setOrientation(X_AXIS);
       transpose(true);
       update();
       break;
     case Qt::Key_1:
+      this->hideActiveTextBox();
       setOrientation(Y_AXIS);
       transpose(false);
       update();
       break;
     case Qt::Key_2:
+      this->hideActiveTextBox();
       setOrientation(Z_AXIS);
       transpose(false);
       update();
       break;
     case Qt::Key_Less: // <
     case Qt::Key_Comma:
+      this->hideActiveTextBox();
       movePace = cFastMoveValue[cFastPace];
       if( cFixedSliceMoveValue > 0 )
         {
@@ -1771,6 +1779,7 @@ void QtGlSliceView::keyPressEvent(QKeyEvent* keyEvent)
       break;
     case Qt::Key_Greater: // >
     case Qt::Key_Period:
+      this->hideActiveTextBox();
       //when pressing down ">" or "<" key, scrolling will go faster
       movePace = cFastMoveValue[ cFastPace ];
       if( cFixedSliceMoveValue > 0 )
@@ -2098,6 +2107,21 @@ void QtGlSliceView::keyPressEvent(QKeyEvent* keyEvent)
     case Qt::Key_H:
       showHelp();
       break;
+    case Qt::Key_G:
+      {
+        auto tb = this->getTextBox();
+        if (tb)
+        {
+          this->removeTextBox();
+        }
+        else
+        {
+          //Create text box
+          this->addTextBox();
+          this->update();
+        }
+        break;
+      }
     default:
       QOpenGLWidget::keyPressEvent( keyEvent );
       break;
@@ -2472,6 +2496,10 @@ void QtGlSliceView::paintGL( void )
         auto rulerStep = static_cast<RulerStep*>(step.get());
         sprintf(s, "STEP: %d (RULER)", cWorkflowIndex);
         }
+      else if (step->type == TEXT_BOX_STEP)
+        {
+        sprintf(s, "STEP: %d (TEXT_BOX)", cWorkflowIndex);
+        }
 
       int posX = width() - widgetFontMetric.horizontalAdvance(s)
         - widgetFontMetric.horizontalAdvance("00");
@@ -2536,6 +2564,12 @@ void QtGlSliceView::paintGL( void )
     glEnable(GL_BLEND);
     getBoxToolCollection()->paint();
     getRulerToolCollection()->paint();
+
+    auto tb = getTextBox();
+    if (tb)
+    {
+      tb->paint();
+    }
     glDisable(GL_BLEND);
     }
 
@@ -3162,6 +3196,18 @@ BoxToolCollection* QtGlSliceView::getBoxToolCollection(int axis, int sliceNum) {
     return cBoxCollections[axis_slice].get();
 }
 
+TextBoxTool* QtGlSliceView::getTextBox() {
+    return this->getTextBox(cWinOrder[2], this->sliceNum());
+}
+
+TextBoxTool* QtGlSliceView::getTextBox(int axis, int sliceNum) {
+    auto axis_slice = std::pair<int, int>(axis, sliceNum);
+    if (cTextBoxes.find(axis_slice) == cTextBoxes.end()) {
+      return nullptr;
+    }
+    return cTextBoxes[axis_slice].get();
+}
+
 void QtGlSliceView::setIsONSDRuler(bool flag) {
     isONSDRuler = !isONSDRuler;
     cCurrentRulerMetaFactory = isONSDRuler ? cONSDMetaFactory : cRainbowMetaFactory;
@@ -3184,6 +3230,40 @@ void QtGlSliceView::initializeRulerMetadataFactories(int curRainbowId, int curOn
 {
   this->cRainbowMetaFactory->initializeState(curRainbowId);
   this->cONSDMetaFactory->initializeState(curOnsdId);
+}
+
+void QtGlSliceView::addTextBox(int axis, int slice) {
+  std::unique_ptr< TextBoxTool > tb(new TextBoxTool(this, this->cTextBoxMetaFactory->getNext()));
+  auto axis_slice = std::pair<int, int>(axis, slice);
+  this->cTextBoxes[axis_slice] = std::move(tb);
+}
+
+void QtGlSliceView::addTextBox() {
+  this->addTextBox(cWinOrder[2], this->sliceNum());
+}
+
+bool QtGlSliceView::removeTextBox(int axis, int slice) {
+  auto tb = this->getTextBox(axis, slice);
+  if (!tb) {
+    return false;
+  }
+
+  this->cTextBoxMetaFactory->refund(std::move(tb->metaData));
+
+  auto axis_slice = std::pair<int, int>(axis, slice);
+  return this->cTextBoxes.erase(axis_slice);
+  
+}
+
+bool QtGlSliceView::removeTextBox() {
+  return this->removeTextBox(cWinOrder[2], this->sliceNum());
+}
+
+void QtGlSliceView::hideActiveTextBox() {
+    auto tb = this->getTextBox();
+    if (tb) {
+      tb->hide();
+    }
 }
 
 #endif
