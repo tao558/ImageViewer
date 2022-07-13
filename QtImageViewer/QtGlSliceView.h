@@ -118,12 +118,14 @@ struct ClickPoint
   //double operator[](int index){return }
   };
 
+typedef enum {PAINT3D_STEP, PAINT2D_STEP, RULER_STEP, BOX_STEP} StepType;
+
 /*! Parent struct defining a Step (with a type)
 * The type is a ClickModeType.
 */
 struct Step {
-  ClickModeType type;
-  Step(ClickModeType cmType) : type(cmType) {}
+  StepType type;
+  Step(StepType sType) : type(sType) {}
 };
 
 /*! Paint step.
@@ -133,14 +135,14 @@ struct Step {
 */
 
 struct PaintStep3D : Step {
-  PaintStep3D() : Step(CM_PAINT3D) {}
+  PaintStep3D() : Step(PAINT3D_STEP) {}
   int label;
   int radius;
   std::string name;
 };
 
 struct PaintStep2D : Step {
-  PaintStep2D() : Step(CM_PAINT2D) {}
+  PaintStep2D() : Step(PAINT2D_STEP) {}
   int label;
   int radius;
   std::string name;
@@ -151,7 +153,7 @@ struct PaintStep2D : Step {
 */
 
 struct BoxStep : Step {
-  BoxStep() : Step(CM_BOX) {}
+  BoxStep() : Step(BOX_STEP) {}
   std::string name;
   QColor color;
   std::shared_ptr< BoxToolMetaDataFactory > factory;
@@ -163,7 +165,7 @@ struct BoxStep : Step {
 
 struct RulerStep : Step
 {
-  RulerStep() : Step(CM_RULER) {}
+  RulerStep() : Step(RULER_STEP) {}
   std::shared_ptr<RulerToolMetaDataFactory> factory;
 };
 

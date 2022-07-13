@@ -1386,23 +1386,23 @@ void QtGlSliceView::switchWorkflowStep( int index )
 
   auto& step = cWorkflowSteps[index];
 
-  if (step->type == CM_PAINT3D) {
+  if (step->type == PAINT3D_STEP) {
     setClickMode(CM_PAINT3D);
     auto paintStep3D = static_cast<PaintStep3D*>(step.get());
     cOverlayPaintColor = paintStep3D->label;
     cOverlayPaintRadius = paintStep3D->radius;
   }
-  else if (step->type == CM_PAINT2D) {
+  else if (step->type == PAINT3D_STEP) {
     setClickMode(CM_PAINT2D);
     auto paintStep2D = static_cast<PaintStep2D*>(step.get());
     cOverlayPaintColor = paintStep2D->label;
     cOverlayPaintRadius = paintStep2D->radius;
-  } else if (step->type == CM_BOX) {
+  } else if (step->type == BOX_STEP) {
     setClickMode(CM_BOX);
     auto boxStep = static_cast<BoxStep*>(step.get());
     auto collection = getBoxToolCollection();
     collection->setMetaDataFactory(boxStep->factory);
-  } else if (step->type == CM_RULER) {
+  } else if (step->type == RULER_STEP) {
     setClickMode(CM_RULER);
     auto rulerStep = static_cast<RulerStep *>(step.get());
     auto collection = getRulerToolCollection();
@@ -2449,25 +2449,25 @@ void QtGlSliceView::paintGL( void )
 
       auto& step = cWorkflowSteps[cWorkflowIndex];
 
-      if (step->type == CM_PAINT3D)
+      if (step->type == PAINT3D_STEP)
         {
         auto paintStep3D = static_cast<PaintStep3D*>(step.get());
         sprintf( s, "STEP: %d, L: %s", cWorkflowIndex,
           paintStep3D->name.c_str());
         }
-      else if (step->type == CM_PAINT2D)
+      else if (step->type == PAINT2D_STEP)
         {
         auto paintStep2D = static_cast<PaintStep2D*>(step.get());
         sprintf( s, "STEP: %d, L: %s", cWorkflowIndex,
           paintStep2D->name.c_str());
         }
-      else if (step->type == CM_BOX)
+      else if (step->type == BOX_STEP)
         {
         auto boxStep = static_cast<BoxStep*>(step.get());
         sprintf( s, "STEP: %d (BOX), L: %s", cWorkflowIndex,
           boxStep->name.c_str());
         }
-      else if (step->type == CM_RULER)
+      else if (step->type == RULER_STEP)
         {
         auto rulerStep = static_cast<RulerStep*>(step.get());
         sprintf(s, "STEP: %d (RULER)", cWorkflowIndex);
