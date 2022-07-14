@@ -211,6 +211,8 @@ QtGlSliceView::~QtGlSliceView()
     saveRulers( rulersFileName.toStdString() );
     auto boxesFileName = cSaveOnExitPrefix + ".boxes.json";
     saveBoxes( boxesFileName.toStdString() );
+    auto textBoxesFileName = cSaveOnExitPrefix + ".textBoxes.json";
+    saveTextBoxes( textBoxesFileName.toStdString() );
   }
 }
 
@@ -544,6 +546,51 @@ void QtGlSliceView::saveBoxes( std::string fileName )
                 text << sep.c_str() << rc->toJson().c_str();
                 isFirst = false;
             }
+    }
+    text << "]}";
+    fpoints.close();
+}
+
+void QtGlSliceView::saveTextBoxesWithPrompt()
+{
+    QFileInfo fileInfo(this->inputImageFilepath);
+    QString newFilepath = fileInfo.path() + "/" + fileInfo.completeBaseName() + ".textboxes.json";
+    QString fileName = QFileDialog::getSaveFileName(this,
+        "Save box measurements", newFilepath, "*.*");
+    if (fileName.isNull())
+    {
+        return;
+    }
+
+    saveTextBoxes(fileName.toStdString());
+}
+
+void QtGlSliceView::saveTextBoxes( std::string fileName )
+{
+    if (this->cTextBoxes.size() == 0)
+    {
+      return;
+    }
+
+    QFile fpoints(QString::fromStdString(fileName));
+    if (!fpoints.open(QIODevice::ReadWrite | QIODevice::Truncate)) // write and overwrite
+    {
+        return;
+    }
+    QTextStream text(&fpoints);
+    text << "{ \"textBoxes\" : [";
+    bool isFirst = true;
+    for (auto& node : cTextBoxes)
+    {
+        std::string sep = isFirst ? "" : ",";
+        auto axis_slice = node.first;
+        auto axis_str = QString::number(axis_slice.first);
+        auto slice_str = QString::number(axis_slice.second);
+
+        text << sep.c_str() << "{ \"axis\" : " + axis_str + ", \"slice\" : " + slice_str + ", \"textBox\" : ";
+        auto tb = node.second.get();
+        text << tb->toJson().c_str() << "}";
+        isFirst = false;
     }
     text << "]}";
     fpoints.close();
@@ -3232,14 +3279,28 @@ void QtGlSliceView::initializeRulerMetadataFactories(int curRainbowId, int curOn
   this->cONSDMetaFactory->initializeState(curOnsdId);
 }
 
-void QtGlSliceView::addTextBox(int axis, int slice) {
-  std::unique_ptr< TextBoxTool > tb(new TextBoxTool(this, this->cTextBoxMetaFactory->getNext()));
+void QtGlSliceView::initializeTextBoxMetadataFactory(int curId)
+{
+  this->cTextBoxMetaFactory->initializeState(curId);
+}
+
+
+void QtGlSliceView::addTextBox(int axis, int slice, std::unique_ptr<TextBoxToolMetaData> metaData, std::string text) {
+  if (!metaData)
+  {
+    metaData = this->cTextBoxMetaFactory->getNext();
+  }
+  std::unique_ptr< TextBoxTool > tb(new TextBoxTool(this, std::move(metaData)));
+  if (text.size() != 0)
+  {
+    tb->setText(text);
+  }
   auto axis_slice = std::pair<int, int>(axis, slice);
   this->cTextBoxes[axis_slice] = std::move(tb);
 }
 
-void QtGlSliceView::addTextBox() {
-  this->addTextBox(cWinOrder[2], this->sliceNum());
+void QtGlSliceView::addTextBox(std::unique_ptr<TextBoxToolMetaData> metaData, std::string text) {
+  this->addTextBox(cWinOrder[2], this->sliceNum(), std::move(metaData), text);
 }
 
 bool QtGlSliceView::removeTextBox(int axis, int slice) {

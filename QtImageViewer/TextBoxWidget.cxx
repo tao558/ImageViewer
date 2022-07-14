@@ -23,6 +23,26 @@ void TextBoxTool::hide()
   textEdit.hide();
 }
 
+void TextBoxTool::setText(std::string text)
+{
+  textEdit.setText(QString::fromStdString(text));
+}
+
+std::string TextBoxTool::toJson() {
+    char txt[256];
+
+    int n = snprintf(txt, sizeof(txt),
+        "{ \"sortId\" : %d, \"text\" : \"%s\", \"defaultText\" : \"%s\"}",
+        metaData->sortId,
+        textEdit.toPlainText().toStdString().c_str(),
+        metaData->defaultText.c_str());
+
+    if (n >= sizeof(txt)) {
+        throw "RulerTool::toJson tried to write too big of string";
+    }
+    return std::string(txt);
+}
+
 
 
 TextBoxTool::~TextBoxTool() {}
@@ -38,6 +58,11 @@ TextBoxMetaDataGenerator::TextBoxMetaDataGenerator(const std::string& defaultTex
 std::unique_ptr< TextBoxToolMetaData > TextBoxMetaDataGenerator::operator()(void) {
     return std::unique_ptr< TextBoxToolMetaData >(new TextBoxToolMetaData{ this->curId++, this->defaultText });
 }
+
+void TextBoxMetaDataGenerator::initializeState(int curId) {
+  this->curId = curId;
+}
+
 
 
 TextBoxToolMetaDataFactory::TextBoxToolMetaDataFactory(std::unique_ptr< TextBoxMetaDataGenerator > generator) : generator{ std::move(generator) } { }
@@ -57,4 +82,8 @@ std::unique_ptr< TextBoxToolMetaData > TextBoxToolMetaDataFactory::getNext() {
 void TextBoxToolMetaDataFactory::refund(std::unique_ptr< TextBoxToolMetaData > textBoxMeta) {
     refunds.push_back(std::move(textBoxMeta));
     std::sort(refunds.begin(), refunds.end());
+}
+
+void TextBoxToolMetaDataFactory::initializeState(int curId) {
+  this->generator->initializeState(curId);
 }

@@ -85,6 +85,8 @@ private:
   bool loadBoxAnnotations(const QJsonObject& root);
   bool loadRulerAnnotations(const QJsonObject& root, int& max_rainbow_id, int& max_onsd_id);
   bool loadRulerAnnotations(const QJsonObject& root);
+  bool loadTextBoxAnnotations(const QJsonObject& root, int &maxTextBoxId);
+  bool loadTextBoxAnnotations(const QJsonObject& root);
 };
 
 #endif

@@ -327,6 +327,8 @@ bool QtImageViewer::loadJSONAnnotations(QString filePathToLoad)
   int maxOnsdId = 0;
   status |= this->loadRulerAnnotations(root, maxRainbowId, maxOnsdId);
 
+  status |= this->loadTextBoxAnnotations(root);
+
   this->sliceView()->setViewOverlayData(true);
   return status;
 }
@@ -517,5 +519,68 @@ bool QtImageViewer::loadRulerAnnotations(const QJsonObject &root)
   int maxRainbowId = 0;
   int maxOnsdId = 0;
   return this->loadRulerAnnotations(root, maxRainbowId, maxOnsdId);
+}
+
+bool QtImageViewer::loadTextBoxAnnotations(const QJsonObject &root, int &maxTextBoxId)
+{
+  int maxTextBoxIdTemp = 0;
+  if (!(root.contains("textBoxes") && root["textBoxes"].isArray()))
+  {
+    return false;
+  }
+
+  const QJsonArray slices = root["textBoxes"].toArray();
+  for (auto val1 : slices)
+  {
+    if (val1.isObject())
+    {
+      const QJsonObject slice = val1.toObject();
+      if (
+          slice.contains("axis") && slice["axis"].isDouble() &&
+          slice.contains("slice") && slice["slice"].isDouble() &&
+          slice.contains("textBox"))
+      {
+        const int axis = (int)slice["axis"].toDouble();
+        const int sliceNum = (int)slice["slice"].toDouble();
+        const QJsonObject tb = slice["textBox"].toObject();
+        if (
+            tb.contains("defaultText") && tb["defaultText"].isString() &&
+            tb.contains("text") && tb["text"].isString() &&
+            tb.contains("sortId"))
+        {
+          const std::string defaultText = tb["defaultText"].toString().toStdString();
+          const std::string text = tb["text"].toString().toStdString();
+          // Note that here we assume -1 will never be used as an ID
+          int sortId = tb["sortId"].toInt(-1);
+          if (sortId == -1)
+          {
+            return false;
+          }
+
+          if (sortId > maxTextBoxIdTemp)
+          {
+            maxTextBoxIdTemp = sortId;
+          }
+
+          std::unique_ptr< TextBoxToolMetaData > metaData(new TextBoxToolMetaData{ sortId, defaultText });
+          this->sliceView()->addTextBox(axis, sliceNum, std::move(metaData), text);
+        }
+      }
+    }
+  }
+  // Successfully parsed all of the serialized rulers,
+  // set the id.
+  maxTextBoxId = maxTextBoxIdTemp;
+
+  // Initialize the state of the metadata factories
+  this->sliceView()->initializeTextBoxMetadataFactory(maxTextBoxId + 1);
+  return true;
+}
+
+bool QtImageViewer::loadTextBoxAnnotations(const QJsonObject &root)
+{
+  // Do nothing with the passed integers
+  int maxId = 0;
+  return this->loadTextBoxAnnotations(root, maxId);
 }
 

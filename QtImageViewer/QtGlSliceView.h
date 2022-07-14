@@ -52,6 +52,7 @@ class BoxToolMetaDataFactory;
 class TextBoxTool;
 class TextBoxToolMetaDataFactory;
 struct RulerToolMetaData;
+struct TextBoxToolMetaData;
 
 using namespace itk;
 
@@ -453,6 +454,13 @@ public:
   void initializeRulerMetadataFactories(int curRainbowId, int curOnsdId);
 
   /**
+  * Initializes the state of the textBox metadata factory
+  * based on the ids.
+  * \param curId current id to initialize the state of the generator
+  */
+  void initializeTextBoxMetadataFactory(int curId);
+
+  /**
   * Adds a box.
   * \param name name of the box
   * \param axis placed axis
@@ -461,6 +469,44 @@ public:
   * \param point2 bottom right of box
   */
   void addBox(std::string name, int axis, int slice, double point1[], double point2[]);
+
+   /**
+  * Adds a text box.
+  * \param axis placed axis
+  * \param slice the slice number
+  * \param metaData optional metaData to initialize with
+  * \param text the textbox text
+  */
+  void addTextBox(int axis, int slice, std::unique_ptr<TextBoxToolMetaData> metaData=nullptr, std::string text="");
+
+  /**
+  * Adds a text box to the current axis and slice.
+  * \param metaData optional metaData to initialize with
+  * \param text the textbox text
+  */
+  void addTextBox(std::unique_ptr<TextBoxToolMetaData> metaData=nullptr, std::string text="");
+
+  /**
+  * removes a text box at the specified axis and slice.
+  * \param axis placed axis
+  * \param slice the slice number
+  * \return true if text box was removed successfully, false otherwise
+  */
+  bool removeTextBox(int axis, int slice);
+
+  /**
+  * Removes the text box at the current axis and slice.
+  * \return true if text box was removed successfully, false otherwise
+  */
+  bool removeTextBox();
+
+  /**
+   * Sets the currently displayed text box (if there is one) to invisible
+   * Operates on the text box in the current axis and slice.
+  */
+  void hideActiveTextBox();
+
+
 
 public slots:
   /// Set the displayState property value.
@@ -518,6 +564,8 @@ public slots:
   void saveRulers( std::string fileName );
   void saveBoxesWithPrompt( void );
   void saveBoxes( std::string fileName );
+  void saveTextBoxesWithPrompt( void );
+  void saveTextBoxes( std::string fileName );
 
   void setIWModeMin(IWModeType newIWModeMin);
   void setIWModeMin(const char* mode);
@@ -601,49 +649,6 @@ public slots:
   * \param flag
   */
   void setIsONSDRuler(bool flag);
-
-  /**
-  * Adds a box.
-  * \param name name of the box
-  * \param axis placed axis
-  * \param slice the slice number
-  * \param point1 top left of box
-  * \param point2 bottom right of box
-  */
-  void addBox(std::string name, int axis, int slice, double point1[], double point2[]);
-
-  /**
-  * Adds a text box.
-  * \param axis placed axis
-  * \param slice the slice number
-  */
-  void addTextBox(int axis, int slice);
-
-  /**
-  * Adds a text box to the current axis and slice.
-  */
-  void addTextBox();
-
-  /**
-  * removes a text box at the specified axis and slice.
-  * \param axis placed axis
-  * \param slice the slice number
-  * \return true if text box was removed successfully, false otherwise
-  */
-  bool removeTextBox(int axis, int slice);
-
-  /**
-  * Removes the text box at the current axis and slice.
-  * \return true if text box was removed successfully, false otherwise
-  */
-  bool removeTextBox();
-
-  /**
-   * Sets the currently displayed text box (if there is one) to invisible
-   * Operates on the text box in the current axis and slice.
-  */
-  void hideActiveTextBox();
-
 
 signals:
 

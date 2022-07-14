@@ -54,6 +54,7 @@ class TextBoxMetaDataGenerator {
 public:
     TextBoxMetaDataGenerator(const std::string& defaultText="");
     std::unique_ptr< TextBoxToolMetaData > operator()(void);
+    void initializeState(int curId);
 protected:
     int curId = 0;
     std::string defaultText;
@@ -76,6 +77,8 @@ public:
     * Return a deleted meta data for reuse.
     */
     void refund(std::unique_ptr< TextBoxToolMetaData > box_meta);
+
+    void initializeState(int curId);
 
 
 protected:
@@ -106,6 +109,10 @@ public:
   void paint();
 
   void hide();
+
+  void setText(std::string text);
+
+  std::string toJson();
 protected:
     QtGlSliceView* parent;
 
